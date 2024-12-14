@@ -1,14 +1,33 @@
-import { Express } from "express";
+import express from "express";
+import { createUser, getUsersByEmail } from "db/users";
+import { authentication, random } from "helpers";
 
-import { getUsersByEmail } from "db/users";
+export const register = async (req: express.Request, res: express.Response) => {
+  try {
+    const { email, password, username } = req.body;
 
-export const register = async (req: Express.Request, res: Express.Response) => {
-    try {
-        const {email, password, username} = req.body
-
-        if 
-    } catch (error) {
-        console.log(error)
-        return res.sendStatus(400)
+    if (!email || !password || !username) {
+      return res.sendStatus(400);
     }
-}
+
+    const existingUser = await getUsersByEmail(email);
+
+    if (existingUser) {
+      return res.sendStatus(400);
+    }
+
+    const salt = random();
+
+    const user = await createUser({
+      email,
+      username,
+      authentication: {
+        salt,
+        password: authentication(salt, password),
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.sendStatus(400);
+  }
+};
